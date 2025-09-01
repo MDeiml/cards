@@ -1,0 +1,93 @@
+:root {
+  --orientation-x: 0deg;
+  --orientation-y: 0deg;
+  --card-height: 6em;
+}
+
+html, body {
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  perspective-origin: calc(50% - var(--orientation-y) * 200%) calc(50% + var(--orientation-x) * 200%);
+  perspective: calc(15 * var(--card-height));
+}
+
+div {
+  transform-style: preserve-3d;
+}
+
+body {
+  display: flex;
+}
+
+#hand1, #hand3 {
+  height: var(--card-height);
+}
+
+#hand2, #hand4 {
+  width: var(--card-height);
+}
+
+#board {
+  flex: auto;
+}
+
+.container {
+  border: 1px solid black;
+  z-index: 0;
+}
+
+.cards-v {
+  display: flex;
+  flex-direction: column;
+  flex: auto;
+}
+
+.cards-h {
+  display: flex;
+  flex-direction: row;
+  flex: auto;
+}
+
+.card {
+  position: absolute;
+  height: var(--card-height);
+  --pos-x: 0;
+  --pos-y: 0;
+  translate: calc(var(--pos-x) * 1px) calc(var(--pos-y) * 1px) 1px;
+  transition: transform 0.2s ease-out;
+  backface-visibility: hidden;
+}
+
+.card>img {
+  height: 100%;
+}
+
+.card::after {
+  content: "";
+  display: block;
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background-color: red;
+  transform: rotateY(180deg);
+  backface-visibility: hidden;
+}
+
+#hand1 .card {
+  transform: rotateX(calc(90deg + var(--orientation-x))) translateY(calc(var(--card-height) * 0.5));
+}
+
+#hand3 .card {
+  transform: rotateX(calc(-90deg + var(--orientation-x))) translateY(calc(var(--card-height) * (-0.5)));
+}
+
+#hand4 .card {
+  transform: rotateZ(90deg) rotateX(calc(-90deg + var(--orientation-y))) translateY(calc(var(--card-height) * (-0.5)));
+}
+
+#hand2 .card {
+  transform: rotateZ(90deg) rotateX(calc(90deg + var(--orientation-y))) translateY(calc(var(--card-height) * 0.5));
+}
