@@ -1,16 +1,15 @@
-function suitFromUnicode(suitUnicode) {
-  const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><text x="15" y="270" font-family="Serif" font-size="300">&#' + suitUnicode + ';</text></svg>';
+function suitFromUnicode(suitUnicode, color) {
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><text x="15" y="270" font-family="Serif" font-size="300" fill="' + color + '">&#' + suitUnicode + ';</text></svg>';
   const blob = new Blob([svg], {type: 'image/svg+xml'});
   return URL.createObjectURL(blob);
 }
 
-let spades = 0x2660;
-
 const cardSvgTemplate = document.getElementById("card-svg-template");
-function svgFromSuitAndValue(suitUrl, value) {
+function svgFromSuitAndValue(suitUrl, value, color) {
   const svg = cardSvgTemplate.content.firstElementChild.cloneNode(true);
   for (const text of svg.querySelectorAll("text")) {
     text.textContent = value;
+    text.setAttribute("fill", color);
   }
   for (const image of svg.querySelectorAll("image")) {
     image.setAttribute("href", suitUrl);
@@ -25,13 +24,49 @@ function cardFromSvg(svg) {
 
   const blob = new Blob([svg.outerHTML], {type: 'image/svg+xml'});
   const url = URL.createObjectURL(blob);
-  console.log(image);
   image.src = url;
 
   return card;
 }
 
-document.getElementById("board").appendChild(cardFromSvg(svgFromSuitAndValue(suitFromUnicode(spades), "A")));
+function frenchCards() {
+  const spades = 0x2660;
+  const hearts = 0x2665;
+  const diamonds = 0x2666;
+  const clubs = 0x2663;
+  const suits = [
+    [spades, "#000"],
+    [hearts, "#f00"],
+    [diamonds, "#f00"],
+    [clubs, "#000"]
+  ];
+  const values = "AKQJT98765432".split("");
+  return suits.flatMap(s => values.map(v => cardFromSvg(svgFromSuitAndValue(suitFromUnicode(s[0], s[1]), v, s[1]))));
+}
+
+function shuffle(array) {
+  let currentIndex = array.length;
+
+  // While there remain elements to shuffle...
+  while (currentIndex != 0) {
+
+    // Pick a remaining element...
+    let randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+
+    // And swap it with the current element.
+    [array[currentIndex], array[randomIndex]] = [
+      array[randomIndex], array[currentIndex]];
+  }
+
+  return array;
+}
+
+const board = document.getElementById("board");
+for (const card of shuffle(frenchCards())) {
+  card.classList.add("flipped");
+  board.appendChild(card);
+}
 
 addEventListener("deviceorientation", (event) => {
   const rotY = event.gamma / 180 * Math.PI
@@ -49,12 +84,14 @@ addEventListener("deviceorientation", (event) => {
 
 var dragCard = null;
 var dragStartMouseX, dragStartMouseY, dragStartCardX, dragStartCardY;
+var dragStartTime;
 
 addEventListener("pointerdown", (event) => {
   dragCard = event.target.closest(".card");
   if (dragCard === null) {
     return;
   }
+  dragStartTime = new Date();
   dragStartMouseX = event.clientX;
   dragStartMouseY = event.clientY;
   dragStartCardX = +dragCard.style.getPropertyValue("--pos-x") || 0;
@@ -62,7 +99,20 @@ addEventListener("pointerdown", (event) => {
   event.preventDefault();
 });
 
+const CLICK_MAX_TIME = 0.1 * 1000;
 addEventListener("pointerup", (event) => {
+  if (dragCard === null) {
+    return;
+  }
+  const onBoard = dragCard.parentElement.id == "board";
+  if (!onBoard) {
+    dragCard.classList.remove("flipped");
+  } else {
+    const time = new Date();
+    if (time - dragStartTime < CLICK_MAX_TIME) {
+      dragCard.classList.toggle("flipped");
+    }
+  }
   dragCard = null;
 });
 

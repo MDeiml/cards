@@ -61,6 +61,7 @@ body {
 
 .card>img {
   height: 100%;
+  transform: rotateY(180deg);
 }
 
 .card::after {
@@ -72,22 +73,25 @@ body {
   right: 0;
   bottom: 0;
   background-color: red;
-  transform: rotateY(180deg);
   backface-visibility: hidden;
 }
 
-#hand1 .card {
-  transform: rotateX(calc(90deg + var(--orientation-x))) translateY(calc(var(--card-height) * 0.5));
+.card:not(.flipped) {
+  transform: rotateX(calc(180deg));
 }
 
-#hand3 .card {
+#hand1 .card {
   transform: rotateX(calc(-90deg + var(--orientation-x))) translateY(calc(var(--card-height) * (-0.5)));
 }
 
+#hand3 .card {
+  transform: rotateX(calc(90deg + var(--orientation-x))) translateY(calc(var(--card-height) * 0.5));
+}
+
 #hand4 .card {
-  transform: rotateZ(90deg) rotateX(calc(-90deg + var(--orientation-y))) translateY(calc(var(--card-height) * (-0.5)));
+  transform: rotateZ(90deg) rotateX(calc(90deg + var(--orientation-y))) translateY(calc(var(--card-height) * 0.5));
 }
 
 #hand2 .card {
-  transform: rotateZ(90deg) rotateX(calc(90deg + var(--orientation-y))) translateY(calc(var(--card-height) * 0.5));
+  transform: rotateZ(90deg) rotateX(calc(-90deg + var(--orientation-y))) translateY(calc(var(--card-height) * (-0.5)));
 }
