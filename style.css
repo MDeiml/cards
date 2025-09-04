@@ -5,16 +5,16 @@
 }
 
 html, body {
+  margin: 0px;
   overflow: hidden;
   width: 100%;
   height: 100%;
   perspective-origin: calc(50% - var(--orientation-y) * 200%) calc(50% + var(--orientation-x) * 200%);
   perspective: calc(15 * var(--card-height));
-  touch-action: pan-x pan-y;
 }
 
 * {
-  touch-action: inherit;
+  touch-action: none;
 }
 
 div {
@@ -55,7 +55,6 @@ body {
 }
 
 .card {
-  touch-action: none;
   position: absolute;
   height: var(--card-height);
   --pos-x: 0;
