@@ -101,7 +101,6 @@ let dragStartTime;
 addEventListener("pointerdown", (event) => {
   dragCard = event.target.closest(".card");
   if (dragCard === null) {
-    event.target.remove();
     return;
   }
   dragStartTime = new Date();
