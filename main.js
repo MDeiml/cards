@@ -1,10 +1,3 @@
-function suitFromUnicode(suitUnicode, color) {
-  const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><text x="15" y="270" font-family="Serif" font-size="300" fill="' + color + '">&#' + suitUnicode + ';</text></svg>';
-  const blob = new Blob([svg], {type: 'image/svg+xml'});
-  return URL.createObjectURL(blob);
-}
-
-
 const cardTemplate = document.getElementById("card-template");
 function cardFromSuitAndValue(suitId, value, color) {
   const card = cardTemplate.content.firstElementChild.cloneNode(true);
@@ -55,7 +48,7 @@ let setName = params.get("set");
 if (!(setName in SETS)) {
   setName = null;
 }
-setName = setName || "german";
+setName = setName || "french";
 const set = SETS[setName];
 
 let values = params.get("values");
@@ -83,9 +76,15 @@ for (const card of cards) {
 addEventListener("deviceorientation", (event) => {
   const rotY = event.gamma / 180 * Math.PI
   const rotX = event.beta / 180 * Math.PI
-  const upX = -Math.sin(rotY) * Math.cos(rotX);
-  const upY = Math.sin(rotX);
-  const upZ = Math.cos(rotX) * Math.cos(rotY);
+  let upX = -Math.sin(rotY) * Math.cos(rotX);
+  let upY = Math.sin(rotX);
+  let upZ = Math.cos(rotX) * Math.cos(rotY);
+  if (upZ < 0) {
+    upZ = 0;
+    const length = Math.sqrt(upX * upX + upY * upY);
+    upX /= length;
+    upY /= length;
+  }
 
   angleX = Math.asin(upY * Math.pow(Math.abs(upY), 3)) * Math.exp(-(Math.abs(upX) * 4));
   angleY = Math.asin(upX * Math.pow(Math.abs(upX), 3)) * Math.exp(-(Math.abs(upY) * 8));
@@ -197,5 +196,3 @@ addEventListener("pointermove", (event) => {
   dragCard.style.setProperty("--pos-y", y);
 
 }, { passive: false });
-
-screen.orientation.lock("portrait-primary");
