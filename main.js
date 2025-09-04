@@ -101,6 +101,7 @@ let dragStartTime;
 addEventListener("pointerdown", (event) => {
   dragCard = event.target.closest(".card");
   if (dragCard === null) {
+    event.target.remove();
     return;
   }
   dragStartTime = new Date();
@@ -109,13 +110,14 @@ addEventListener("pointerdown", (event) => {
   dragStartCardX = +dragCard.style.getPropertyValue("--pos-x") || 0;
   dragStartCardY = +dragCard.style.getPropertyValue("--pos-y") || 0;
   event.preventDefault();
-});
+}, { passive: false });
 
 const CLICK_MAX_TIME = 0.1 * 1000;
 addEventListener("pointerup", (event) => {
   if (dragCard === null) {
     return;
   }
+  event.preventDefault();
   const onBoard = dragCard.parentElement.id == "board";
   if (!onBoard) {
     dragCard.classList.remove("flipped");
@@ -126,7 +128,7 @@ addEventListener("pointerup", (event) => {
     }
   }
   dragCard = null;
-});
+}, { passive: false });
 
 addEventListener("pointermove", (event) => {
   if (event.buttons == 0) {
@@ -195,4 +197,4 @@ addEventListener("pointermove", (event) => {
   dragCard.style.setProperty("--pos-x", x);
   dragCard.style.setProperty("--pos-y", y);
 
-});
+}, { passive: false });
