@@ -198,3 +198,5 @@ addEventListener("pointermove", (event) => {
   dragCard.style.setProperty("--pos-y", y);
 
 }, { passive: false });
+
+screen.orientation.lock("portrait-primary");
