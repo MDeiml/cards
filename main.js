@@ -3,16 +3,36 @@ const setTemplate = document.getElementById("set-template");
 const game = document.getElementById("game");
 const settings = document.getElementById("settings");
 
+function range(n, m) {
+  if (m === undefined) {
+    m = n;
+    n = 1;
+  }
+  return Array.from({length: m - n + 1}, (x, i) => i + n);
+}
+
+function repeat(n, x) {
+  return Array.from({length: n}, y => 0).flatMap(y => x);
+}
+
 const SETS = {
   "french": {
     "suits": ["S", "H", "D", "C"],
-    "values": ["2", "3", "4", "5", "6","7","8","9","10","J","Q","K","A"],
+    "values": range(2, 10).concat(["J","Q","K","A"]),
     "mainCard": "SA"
   },
   "german": {
     "suits": ["E", "L", "H", "S"],
-    "values": ["6","7","8","9","10","U","O","K","A"],
+    "values": range(6, 10).concat(["U","O","K","A"]),
     "mainCard": "EO"
+  },
+  "colors": {
+    "cards": ["R", "G", "B", "Y"]
+      .flatMap(
+        c => ["0"].concat(repeat(2, range(1, 9).concat(["+2", "\u21c4", "\u{1f6c7}"]))).map(v => c + v)
+      )
+      .concat(repeat(4, ["P", "4"])),
+    "mainCard": "P"
   }
 };
 
@@ -81,7 +101,7 @@ function initBoard() {
   } else {
     values = values.split(",");
   }
-  let cardNames = set.suits.flatMap(s => values.map(v => s + v));
+  let cardNames = set.cards || set.suits.flatMap(s => values.map(v => s + v));
   let cards = cardNames.map(c => cardFromName(activeSet, c, cardTemplate));
 
   shuffle(cards);
