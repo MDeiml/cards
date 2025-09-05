@@ -4,25 +4,22 @@
   --card-height: 100px;
 }
 
-* {
-  touch-action: none;
-}
-
 html, body {
   margin: 0px;
+  scroll-snap-type: y mandatory;
+}
+
+#game, #settings {
   overflow: hidden;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   perspective-origin: calc(50% - var(--orientation-y) * 200%) calc(50% + var(--orientation-x) * 200%);
   perspective: calc(15 * var(--card-height));
+  scroll-snap-align: center;
 }
 
-div {
+.cards-v, .cards-h, .container, .card {
   transform-style: preserve-3d;
-}
-
-body {
-  display: flex;
 }
 
 #hand1, #hand3 {
@@ -39,7 +36,7 @@ body {
 
 .container {
   border: 1px solid black;
-  z-index: 0;
+  z-index: -1;
 }
 
 .cards-v {
@@ -61,24 +58,20 @@ body {
   --pos-y: 0;
   translate: calc(var(--pos-x) * 1px) calc(var(--pos-y) * 1px) 1px;
   transition: transform 0.2s ease-out;
+  touch-action: none;
 }
 
-.card>svg {
-  height: 100%;
-  transform: rotateY(180deg);
-  backface-visibility: hidden;
-}
-
-.card::after {
-  content: "";
-  display: block;
+.card>*:first-child {
   position: absolute;
-  left: 0;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  background-color: red;
+  height: 100%;
   backface-visibility: hidden;
+}
+
+.card>*:last-child {
+  position: absolute;
+  height: 100%;
+  backface-visibility: hidden;
+  transform: rotateY(180deg);
 }
 
 .card:not(.flipped) {

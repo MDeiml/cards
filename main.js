@@ -1,6 +1,27 @@
 const cardTemplate = document.getElementById("card-template");
-function cardFromSuitAndValue(suitId, value, color) {
-  const card = cardTemplate.content.firstElementChild.cloneNode(true);
+const setTemplate = document.getElementById("set-template");
+const game = document.getElementById("game");
+const settings = document.getElementById("settings");
+
+const SETS = {
+  "german": {
+    "suits": ["E", "L", "H", "S"],
+    "values": ["6","7","8","9","10","U","O","K","A"],
+    "mainCard": "EO"
+  },
+  "french": {
+    "suits": ["S", "H", "D", "C"],
+    "values": ["2", "3", "4", "5", "6","7","8","9","10","J","Q","K","A"],
+    "mainCard": "SA"
+  },
+};
+
+function cardFromName(setName, c, template) {
+  const set = SETS[setName];
+  const suitName = c[0];
+  const suitId = setName + "_" + suitName;
+  const value = c.substring(1);
+  const card = template.content.firstElementChild.cloneNode(true);
   for (const text of card.querySelectorAll("text")) {
     text.textContent = value;
     text.setAttribute("fill", document.getElementById(suitId).getAttribute("fill"));
@@ -11,17 +32,6 @@ function cardFromSuitAndValue(suitId, value, color) {
 
   return card;
 }
-
-const SETS = {
-  "german": {
-    "suits": ["E", "L", "H", "S"],
-    "values": ["6","7","8","9","10","U","O","K","A"]
-  },
-  "french": {
-    "suits": ["S", "H", "D", "C"],
-    "values": ["2", "3", "4", "5", "6","7","8","9","10","J","Q","K","A"]
-  },
-};
 
 // from stackoverflow
 function shuffle(array) {
@@ -42,35 +52,48 @@ function shuffle(array) {
   return array;
 }
 
-const params = new URLSearchParams(document.location.search);
-let setName = params.get("set");
+let activeSet = "french";
 
-if (!(setName in SETS)) {
-  setName = null;
+function initBoard() {
+  for (const card of game.querySelectorAll(".card")) {
+    card.remove();
+  }
+  const params = new URLSearchParams(document.location.search);
+  let activeSetP = params.get("set");
+
+  if (!(activeSetP in SETS)) {
+    activeSetP = null;
+  }
+  activeSet = activeSetP || activeSet;
+  const set = SETS[activeSet];
+
+  let values = params.get("values");
+  if (values === null) {
+    values = set.values;
+  } else {
+    values = values.split(",");
+  }
+  let cardNames = set.suits.flatMap(s => values.map(v => s + v));
+  let cards = cardNames.map(c => cardFromName(activeSet, c, cardTemplate));
+
+  shuffle(cards);
+
+
+  for (const card of cards) {
+    card.classList.add("flipped");
+    board.appendChild(card);
+  }
 }
-setName = setName || "french";
-const set = SETS[setName];
 
-let values = params.get("values");
-if (values === null) {
-  values = set.values;
-} else {
-  values = values.split(",");
-}
-let cardNames = Object.keys(set.suits).flatMap(s => values.map(v => s + v));
-let cards = cardNames.map(c => {
-  const suitName = c[0];
-  const suit = setName + "_" + set.suits[suitName];
-  const value = c.substring(1);
-  return cardFromSuitAndValue(suit, value, suit[1]);
-});
+initBoard();
 
-shuffle(cards);
-
-
-for (const card of cards) {
-  card.classList.add("flipped");
-  board.appendChild(card);
+for (const setName of Object.keys(SETS)) {
+  card = cardFromName(setName, SETS[setName].mainCard, setTemplate);
+  if (setName != activeSet) {
+    card.classList.add("flipped");
+  }
+  card.dataset["set"] = setName;
+  settings.appendChild(card);
 }
 
 addEventListener("deviceorientation", (event) => {
@@ -117,12 +140,26 @@ addEventListener("pointerup", (event) => {
   }
   event.preventDefault();
   const onBoard = dragCard.parentElement.id == "board";
-  if (!onBoard) {
+  const onSettings = dragCard.parentElement.id == "settings";
+  if (!onBoard && !onSettings) {
     dragCard.classList.remove("flipped");
   } else {
     const time = new Date();
     if (time - dragStartTime < CLICK_MAX_TIME) {
-      dragCard.classList.toggle("flipped");
+      if (onSettings) {
+        if (dragCard.classList.contains("flipped")) {
+          for (const card of settings.querySelectorAll(".card")) {
+            card.classList.add("flipped");
+          }
+          dragCard.classList.remove("flipped");
+          const params = new URLSearchParams(document.location.search);
+          params.set("set", dragCard.dataset["set"]);
+          history.replaceState(null, "", "?"+params);
+          initBoard();
+        }
+      } else {
+        dragCard.classList.toggle("flipped");
+      }
     }
   }
   dragCard = null;
