@@ -4,16 +4,16 @@ const game = document.getElementById("game");
 const settings = document.getElementById("settings");
 
 const SETS = {
-  "german": {
-    "suits": ["E", "L", "H", "S"],
-    "values": ["6","7","8","9","10","U","O","K","A"],
-    "mainCard": "EO"
-  },
   "french": {
     "suits": ["S", "H", "D", "C"],
     "values": ["2", "3", "4", "5", "6","7","8","9","10","J","Q","K","A"],
     "mainCard": "SA"
   },
+  "german": {
+    "suits": ["E", "L", "H", "S"],
+    "values": ["6","7","8","9","10","U","O","K","A"],
+    "mainCard": "EO"
+  }
 };
 
 function cardFromName(setName, c, template) {
@@ -22,13 +22,13 @@ function cardFromName(setName, c, template) {
   const suitId = setName + "_" + suitName;
   const value = c.substring(1);
   const card = template.content.firstElementChild.cloneNode(true);
-  for (const text of card.querySelectorAll("text")) {
+  card.querySelectorAll("text").forEach(text => {
     text.textContent = value;
     text.setAttribute("fill", document.getElementById(suitId).getAttribute("fill"));
-  }
-  for (const image of card.querySelectorAll("use")) {
+  });
+  card.querySelectorAll("use").forEach(image => {
     image.setAttribute("href", "#" + suitId);
-  }
+  });
 
   return card;
 }
@@ -36,20 +36,28 @@ function cardFromName(setName, c, template) {
 // from stackoverflow
 function shuffle(array) {
   let currentIndex = array.length;
-
-  // While there remain elements to shuffle...
   while (currentIndex != 0) {
-
-    // Pick a remaining element...
     let randomIndex = Math.floor(Math.random() * currentIndex);
     currentIndex--;
-
-    // And swap it with the current element.
-    [array[currentIndex], array[randomIndex]] = [
-      array[randomIndex], array[currentIndex]];
+    [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
   }
 
   return array;
+}
+
+function cardDimension(card) {
+  const cardHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--card-height"));
+  const box = card.firstElementChild.viewBox.baseVal;
+  const cardWidth = cardHeight * box.width / box.height;
+  return [cardWidth, cardHeight];
+}
+
+function placeRow(cards, x, y) {
+  for (const card of cards) {
+    card.style.setProperty("--pos-x", x);
+    card.style.setProperty("--pos-y", y);
+    x += cardDimension(card)[0];
+  }
 }
 
 let activeSet = "french";
@@ -78,23 +86,25 @@ function initBoard() {
 
   shuffle(cards);
 
-
   for (const card of cards) {
-    card.classList.add("flipped");
     board.appendChild(card);
   }
 }
 
 initBoard();
 
+let cards = [];
+
 for (const setName of Object.keys(SETS)) {
   card = cardFromName(setName, SETS[setName].mainCard, setTemplate);
-  if (setName != activeSet) {
-    card.classList.add("flipped");
+  if (setName == activeSet) {
+    card.classList.remove("flipped");
   }
   card.dataset["set"] = setName;
   settings.appendChild(card);
+  cards.push(card);
 }
+requestAnimationFrame(() => placeRow(cards, 0, 0));
 
 addEventListener("deviceorientation", (event) => {
   const rotY = event.gamma / 180 * Math.PI
@@ -113,7 +123,6 @@ addEventListener("deviceorientation", (event) => {
   angleY = Math.asin(upX * Math.pow(Math.abs(upX), 3)) * Math.exp(-(Math.abs(upY) * 8));
   document.documentElement.style.setProperty("--orientation-x", angleX + "rad");
   document.documentElement.style.setProperty("--orientation-y", angleY + "rad");
-  // document.getElementById("output").textContent = upX + "," + upY;
 });
 
 let dragCard = null;
@@ -133,7 +142,7 @@ addEventListener("pointerdown", (event) => {
   event.preventDefault();
 }, { passive: false });
 
-const CLICK_MAX_TIME = 0.1 * 1000;
+const CLICK_MAX_TIME = 0.2 * 1000;
 addEventListener("pointerup", (event) => {
   if (dragCard === null) {
     return;
@@ -166,7 +175,7 @@ addEventListener("pointerup", (event) => {
 }, { passive: false });
 
 addEventListener("pointermove", (event) => {
-  if (event.buttons == 0) {
+  if (event.buttons != 1) {
     dragCard = null;
   }
   if (dragCard === null) {
@@ -179,9 +188,7 @@ addEventListener("pointermove", (event) => {
   parentY = dragCard.parentElement.getBoundingClientRect().y;
 
   let hoverOver = null;
-  const cardHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--card-height"));
-  const box = dragCard.firstElementChild.viewBox.baseVal;
-  const cardWidth = cardHeight * box.width / box.height;
+  const [cardWidth, cardHeight] = cardDimension(dragCard);
   for (const element of document.elementsFromPoint(x + parentX + cardWidth/2, y + parentY + cardHeight/2)) {
     if (element.classList.contains("container")) {
       hoverOver = element;
@@ -233,3 +240,29 @@ addEventListener("pointermove", (event) => {
   dragCard.style.setProperty("--pos-y", y);
 
 }, { passive: false });
+
+let distanceStart = null;
+let cardHeightStart;
+
+function zoomListener(event) {
+  if (event.touches.length != 2) {
+    touches = null;
+    return;
+  }
+  event.preventDefault();
+  const dx = event.touches[0].clientX - event.touches[1].clientX;
+  const dy = event.touches[0].clientY - event.touches[1].clientY;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  if (distance == 0) {
+    return;
+  }
+  if (touches === null) {
+    distanceStart = distance;
+    cardHeightStart = +getComputedStyle(document.documentElement).getPropertyValue("--card-height");
+  }
+  const ratio = distance / distanceStart;
+  document.documentElement.style.setProperty("--card-height", ratio * cardHeightStart);
+}
+addEventListener("touchstart", zoomListener, { passive: false });
+addEventListener("touchend", zoomListener, { passive: false });
+addEventListener("touchmove", zoomListener, { passive: false });

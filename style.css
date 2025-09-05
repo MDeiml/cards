@@ -7,6 +7,8 @@
 html, body {
   margin: 0px;
   scroll-snap-type: y mandatory;
+  overflow-x: clip;
+  touch-action: pan-y;
 }
 
 #game, #settings {
